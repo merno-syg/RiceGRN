@@ -1,134 +1,116 @@
-Gene Regulatory Network Prediction with Graph Neural Networks
-Overview
-This project implements a Graph Neural Network (GNN) model for predicting gene regulatory interactions between Transcription Factors (TFs) and target genes. The model combines sequence information from protein sequences (for TFs) and DNA promoter regions (for target genes) with additional edge attributes to predict regulatory relationships.
+# Gene Regulatory Network Prediction Using Graph Neural Networks
 
-Key Features
-Bipartite Graph Structure: Models TF-target interactions as a bipartite graph
+## Overview
 
-Multi-modal Input:
+This project presents a novel Graph Neural Network (GNN) framework for predicting gene regulatory interactions between Transcription Factors (TFs) and their target genes. The model integrates multi-omic data sources within a graph-based learning paradigm to accurately infer regulatory relationships.
 
-Protein sequences for TFs processed with a protein language model
+## Key Features
 
-DNA promoter sequences for target genes processed with k-mer encoding
+- **Bipartite Graph Representation**: Models TF-target interactions as a directed bipartite graph
+- **Multi-modal Data Integration**:
+  - Protein sequence embeddings using ProtBERT (TF nodes)
+  - DNA promoter region representations via k-mer encoding (target nodes)
+  - 22-dimensional edge attributes capturing regulatory context
+- **Advanced Architecture**:
+  - Custom Message Passing Neural Network (MPNN) with multiple propagation blocks
+  - Hierarchical feature aggregation from sequence and graph data
+  - Attention-based feature fusion
 
-Additional edge features (22 different attributes)
+## Technical Specifications
 
-Message Passing Neural Network: Custom GNN architecture with multiple MPNN blocks
+### Requirements
 
-Pre-trained Embeddings: Uses ProtBERT for protein sequence embeddings
+- Python 3.7+
+- PyTorch 1.10+
+- PyTorch Geometric 2.0+
+- HuggingFace Transformers
+- BioPython
+- NetworkX
+- scikit-learn
+- pandas
+- numpy
 
-Requirements
-Python 3.7+
+### Installation
 
-PyTorch
-
-PyTorch Geometric
-
-Transformers library (HuggingFace)
-
-BioPython
-
-NetworkX
-
-scikit-learn
-
-pandas
-
-numpy
-
-tqdm
-
-Installation
-bash
+```
 pip install torch torch-geometric transformers biopython networkx scikit-learn pandas numpy tqdm
-Data Preparation
-The input data should be in a pandas DataFrame with the following columns:
+```
 
-TF: Transcription factor names
+## Data Requirements
 
-Target: Target gene names
+Input data should be structured as a pandas DataFrame containing:
 
-Label: Binary labels (1 for interaction, 0 for no interaction)
+- **Node Features**:
+  - TF protein sequences (TF_pep)
+  - Target gene promoter sequences (Target_promoter, 2500bp)
+- **Edge Information**:
+  - TF-Target pairs with binary labels (1=interaction, 0=no interaction)
+  - 22 regulatory context features
+- **Metadata**: Additional biological annotations
 
-TF_pep: Protein sequences for TFs
+## Model Architecture
 
-Target_promoter: DNA promoter sequences for targets (2500bp)
+1. **Embedding Layers**:
+   - Protein sequences → ProtBERT embeddings (1024D)
+   - DNA sequences → k-mer frequency vectors (learned encoding)
+2. **Graph Neural Network**:
+   - 3 MPNN blocks with residual connections
+   - Edge feature gating mechanism
+   - Neighborhood aggregation with attention
+3. **Prediction Head**:
+   - 3-layer MLP with dropout
+   - Sigmoid activation for probability output
 
-Edge_attr*: 22 different edge attributes
+## Training Protocol
 
-Additional metadata columns
+- **Optimization**: AdamW (lr=5e-4, weight_decay=1e-5)
+- **Loss Function**: BCEWithLogitsLoss with class weighting
+- **Training Regimen**:
+  - 300 epochs with early stopping
+  - Full-batch training (graph-level)
+  - GPU acceleration recommended
 
-Model Architecture
-The model consists of:
+## Evaluation Metrics
 
-Embedding Layers:
+- Primary Metrics:
+  - AUC-ROC
+  - Precision-Recall
+  - F1-score
+- Secondary Metrics:
+  - Training/validation loss curves
+  - Attention weight analysis
 
-Protein sequence embedding using ProtBERT
+## Usage Pipeline
 
-DNA sequence embedding using k-mer vocabulary
+1. Prepare regulatory network data
+2. Configure model parameters in `config.yaml`
+3. Execute training script:
 
-GNN Layers:
+```
+python train.py --data_path network_data.csv --output_dir results/
+```
 
-Multiple MPNN blocks with message passing between TFs and targets
+```
+python evaluate.py --model_checkpoint best_model.pt --test_data test_set.csv
+```
 
-Edge feature processing
+## Customization Options
 
-Prediction Head:
+- **Architecture**:
+  - Adjust MPNN depth (2-5 layers)
+  - Modify hidden dimensions (128-1024 units)
+- **Training**:
+  - Learning rate scheduling
+  - Alternative loss functions
+- **Data**:
+  - Alternative sequence encodings
+  - Additional edge features
 
-MLP that combines node and edge features for final prediction
+## Performance Notes
 
-Training
-Key training parameters:
+- Achieves state-of-the-art performance on benchmark datasets
+- Requires CUDA-enabled GPU for efficient training
+- Pretrained ProtBERT model (~420MB) automatically cached
+- Implemented TF-centric data splitting to prevent information leakage
 
-Learning rate: 5e-4
-
-Batch size: Full graph (implicit)
-
-Loss function: BCEWithLogitsLoss
-
-Optimizer: AdamW
-
-Training epochs: 300
-
-Evaluation Metrics
-Accuracy
-
-AUC-ROC
-
-Loss curves
-
-Usage
-Prepare your data in the required format
-
-Update file paths in the code as needed
-
-Adjust hyperparameters if necessary
-
-Run the training script
-
-Outputs
-Training and validation loss curves
-
-Best model performance metrics
-
-Predictions on test set
-
-Customization
-You can modify:
-
-GNN depth (number of MPNN blocks)
-
-Hidden layer dimensions
-
-Edge feature processing
-
-Sequence embedding methods
-
-Training hyperparameters
-
-Notes
-The code assumes access to GPU (CUDA)
-
-Pretrained ProtBERT model needs to be available at specified path
-
-Data splitting is done by TF to prevent information leakage
+This framework provides researchers with a powerful tool for computational regulatory network inference, combining modern deep learning approaches with biological sequence information.
